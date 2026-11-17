@@ -1,0 +1,28 @@
+{
+  "name": "@social-media/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "24.14.0",
+    "npm": "11.21.1"
+  },
+  "scripts": {
+    "prebuild": "npm run build --workspace @social-media/contracts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node --env-file-if-exists=.env dist/main.js",
+    "lint": "eslint src tests --max-warnings=0",
+    "pretypecheck": "npm run build --workspace @social-media/contracts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "pretest": "npm run build --workspace @social-media/contracts",
+    "test": "tsc -p tsconfig.test.json && node --test .local/tests/src/composition/api-config.test.js .local/tests/tests/integration/health.test.js"
+  },
+  "dependencies": {
+    "@social-media/contracts": "0.0.0",
+    "@nestjs/common": "12.5.0",
+    "@nestjs/core": "12.5.0",
+    "@nestjs/platform-express": "12.5.0",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2"
+  }
+}

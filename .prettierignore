@@ -1,0 +1,13 @@
+reference/
+node_modules/
+.husky/_/
+.next/
+dist/
+build/
+coverage/
+package-lock.json
+.env
+.env.*
+.secrets/
+.task-checks/
+.local/

@@ -1,0 +1,32 @@
+{
+  "name": "@social-media/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "24.14.0",
+    "npm": "11.21.1"
+  },
+  "scripts": {
+    "predev": "npm run build --workspace @social-media/contracts",
+    "dev": "next dev --hostname 127.0.0.1 --port 3000",
+    "prebuild": "npm run build --workspace @social-media/contracts",
+    "build": "next build",
+    "start": "next start --hostname 127.0.0.1 --port 3000",
+    "lint": "eslint src --max-warnings=0",
+    "pretypecheck": "npm run build --workspace @social-media/contracts",
+    "typecheck": "next typegen && tsc -p tsconfig.json --noEmit",
+    "pretest": "npm run build --workspace @social-media/contracts",
+    "test": "tsc -p tsconfig.test.json && node --test .local/tests/app/api/health/route.test.js .local/tests/features/api-connection/server/api-health.test.js .local/tests/features/api-connection/request-api-health.test.js"
+  },
+  "dependencies": {
+    "@social-media/contracts": "0.0.0",
+    "next": "16.4.6",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0"
+  }
+}

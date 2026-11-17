@@ -1,0 +1,149 @@
+name: social-media-local
+
+services:
+  app-postgres:
+    image: postgres:17.12-alpine
+    environment:
+      POSTGRES_DB: social_media
+      POSTGRES_USER: social_media_app
+      POSTGRES_PASSWORD: ${APP_POSTGRES_PASSWORD:?Set APP_POSTGRES_PASSWORD in infra/local/.env}
+    ports:
+      - "127.0.0.1:${APP_POSTGRES_PORT:-25432}:5432"
+    volumes:
+      - app-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -h 127.0.0.1 -U social_media_app -d social_media",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    stop_grace_period: 30s
+
+  temporal-postgres:
+    image: postgres:17.12-alpine
+    environment:
+      POSTGRES_DB: temporal
+      POSTGRES_USER: temporal
+      POSTGRES_PASSWORD: ${TEMPORAL_POSTGRES_PASSWORD:?Set TEMPORAL_POSTGRES_PASSWORD in infra/local/.env}
+    volumes:
+      - temporal-postgres-data:/var/lib/postgresql/data
+      - ../services/temporal/create-visibility-database.sql:/docker-entrypoint-initdb.d/10-create-visibility.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U temporal -d temporal"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    stop_grace_period: 30s
+
+  temporal-schema:
+    image: temporalio/admin-tools:1.32.2
+    depends_on:
+      temporal-postgres:
+        condition: service_healthy
+    environment:
+      SQL_HOST: temporal-postgres
+      SQL_PORT: "5432"
+      SQL_USER: temporal
+      SQL_PASSWORD: ${TEMPORAL_POSTGRES_PASSWORD:?Set TEMPORAL_POSTGRES_PASSWORD in infra/local/.env}
+    volumes:
+      - ../services/temporal/setup-schema.sh:/opt/local/setup-schema.sh:ro
+    entrypoint: ["/bin/sh", "/opt/local/setup-schema.sh"]
+    restart: "no"
+
+  temporal:
+    image: temporalio/server:1.32.2
+    depends_on:
+      temporal-schema:
+        condition: service_completed_successfully
+    environment:
+      DB: postgres12
+      DB_PORT: "5432"
+      DBNAME: temporal
+      VISIBILITY_DBNAME: temporal_visibility
+      POSTGRES_SEEDS: temporal-postgres
+      POSTGRES_USER: temporal
+      POSTGRES_PWD: ${TEMPORAL_POSTGRES_PASSWORD:?Set TEMPORAL_POSTGRES_PASSWORD in infra/local/.env}
+      BIND_ON_IP: "0.0.0.0"
+      DYNAMIC_CONFIG_FILE_PATH: /etc/temporal/config/dynamicconfig/local.yaml
+      LOG_LEVEL: warn
+    volumes:
+      - ../services/temporal/dynamic-config.yaml:/etc/temporal/config/dynamicconfig/local.yaml:ro
+    ports:
+      - "127.0.0.1:${TEMPORAL_PORT:-27233}:7233"
+    healthcheck:
+      test: ["CMD", "nc", "-z", "127.0.0.1", "7233"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
+    stop_grace_period: 30s
+
+  temporal-namespace:
+    image: temporalio/admin-tools:1.32.2
+    depends_on:
+      temporal:
+        condition: service_healthy
+    environment:
+      TEMPORAL_ADDRESS: temporal:7233
+      TEMPORAL_NAMESPACE: ${TEMPORAL_NAMESPACE:-social-media}
+    volumes:
+      - ../services/temporal/setup-namespace.sh:/opt/local/setup-namespace.sh:ro
+    entrypoint: ["/bin/sh", "/opt/local/setup-namespace.sh"]
+    restart: "no"
+
+  temporal-ui:
+    image: temporalio/ui:2.56.1
+    depends_on:
+      temporal-namespace:
+        condition: service_completed_successfully
+    environment:
+      TEMPORAL_ADDRESS: temporal:7233
+    ports:
+      - "127.0.0.1:${TEMPORAL_UI_PORT:-28080}:8080"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8080"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  minio:
+    image: social-media/minio:RELEASE.2025-10-15T17-29-55Z
+    build:
+      context: ../services/minio
+    command:
+      ["server", "/data", "--address", ":9000", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?Set MINIO_ROOT_USER in infra/local/.env}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Set MINIO_ROOT_PASSWORD in infra/local/.env}
+    ports:
+      - "127.0.0.1:${MINIO_API_PORT:-29000}:9000"
+      - "127.0.0.1:${MINIO_CONSOLE_PORT:-29001}:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "--fail",
+          "--silent",
+          "--max-time",
+          "3",
+          "http://127.0.0.1:9000/minio/health/ready",
+        ]
+      interval: 5s
+      timeout: 4s
+      retries: 20
+      start_period: 10s
+    stop_grace_period: 30s
+
+volumes:
+  app-postgres-data:
+  temporal-postgres-data:
+  minio-data:

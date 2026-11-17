@@ -1,0 +1,123 @@
+:root {
+  color-scheme: light;
+  font-family: "Geist", "Segoe UI", sans-serif;
+  color: #193029;
+  background: #f5f7f6;
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
+.app-shell {
+  min-height: 100dvh;
+}
+.app-header {
+  padding: 24px clamp(24px, 6vw, 80px);
+  background: #fff;
+  border-bottom: 1px solid #e0e7e3;
+  font-weight: 650;
+  letter-spacing: -0.025em;
+  font-size: 20px;
+}
+main {
+  width: min(100% - 40px, 640px);
+  margin: 80px auto;
+}
+h1 {
+  margin: 0 0 24px;
+  font-size: clamp(28px, 5vw, 36px);
+  letter-spacing: -0.04em;
+  font-weight: 600;
+}
+.connection-card {
+  padding: clamp(24px, 5vw, 40px);
+  background: #fff;
+  border: 1px solid #dce5df;
+  border-radius: 20px;
+  box-shadow: 0 8px 30px #19302906;
+}
+.connection-status {
+  min-height: 145px;
+}
+.status-indicator {
+  display: block;
+  width: 16px;
+  height: 16px;
+  margin-bottom: 24px;
+  border-radius: 50%;
+}
+.status-indicator--checking {
+  border: 2px solid #d1ded6;
+  border-top-color: #2d6953;
+  animation: spin 1s linear infinite;
+}
+.status-indicator--connected {
+  background: #2d8060;
+  box-shadow: 0 0 0 6px #edf6f0;
+}
+.status-indicator--error {
+  background: #b84838;
+  box-shadow: 0 0 0 6px #fcf0ed;
+}
+h2 {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.4;
+  font-weight: 550;
+  letter-spacing: -0.02em;
+}
+p {
+  color: #66736d;
+  line-height: 1.6;
+  margin: 12px 0 24px;
+}
+button {
+  font: inherit;
+  font-weight: 550;
+  color: #fff;
+  background: #245c46;
+  border: 0;
+  border-radius: 10px;
+  padding: 13px 20px;
+  cursor: pointer;
+  min-height: 48px;
+  transition: background 150ms;
+}
+button:hover:enabled {
+  background: #194a36;
+}
+button:disabled {
+  background: #dce4df;
+  color: #607169;
+  cursor: wait;
+}
+button:focus-visible {
+  outline: 3px solid #77a991;
+  outline-offset: 4px;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .status-indicator--checking {
+    animation: none;
+  }
+  button {
+    transition: none;
+  }
+}
+@media (max-width: 480px) {
+  main {
+    margin-top: 48px;
+  }
+  button {
+    width: 100%;
+  }
+}

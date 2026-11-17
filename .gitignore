@@ -1,0 +1,24 @@
+# Local third-party checkout; this application has its own repository.
+/reference/
+
+# Dependencies and generated output
+node_modules/
+.next/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+apps/web/next-env.d.ts
+
+# Private configuration and local data
+.env
+.env.*
+!.env.example
+.secrets/
+*.log
+.task-checks/
+.local/
+
+# Operating system files
+.DS_Store
+Thumbs.db

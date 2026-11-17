@@ -1,0 +1,70 @@
+{
+  "name": "social-media-automation",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "24.14.0",
+    "npm": "11.21.1"
+  },
+  "packageManager": "npm@11.21.1",
+  "workspaces": [
+    "apps/web",
+    "apps/api",
+    "apps/worker",
+    "packages/backend",
+    "packages/contracts"
+  ],
+  "scripts": {
+    "prepare": "husky",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint scripts tests eslint.config.mjs --max-warnings=0",
+    "test:tooling": "node --test tests/tooling/*.test.mjs",
+    "test:typescript-config": "node --test tests/configuration/typescript-config.test.mjs",
+    "build:api": "npm run build --workspace @social-media/api",
+    "start:api": "npm run build:api && npm run start --workspace @social-media/api",
+    "lint:api": "npm run lint --workspace @social-media/api",
+    "typecheck:api": "npm run typecheck --workspace @social-media/api",
+    "test:api": "npm run test --workspace @social-media/api",
+    "check:api": "npm run lint:api && npm run typecheck:api && npm run test:api",
+    "dev:web": "npm run dev --workspace @social-media/web",
+    "build:web": "npm run build --workspace @social-media/web",
+    "start:web": "npm run start --workspace @social-media/web",
+    "lint:web": "npm run lint --workspace @social-media/web",
+    "typecheck:web": "npm run typecheck --workspace @social-media/web",
+    "test:web": "npm run test --workspace @social-media/web",
+    "check:web": "npm run typecheck:web && npm run lint:web && npm run test:web",
+    "check:contracts": "npm run build --workspace @social-media/contracts && npm run lint --workspace @social-media/contracts && npm run test --workspace @social-media/contracts",
+    "infra:config": "docker compose --project-name social-media-local --env-file infra/local/.env -f infra/local/compose.yaml config --quiet",
+    "infra:up": "docker compose --project-name social-media-local --env-file infra/local/.env -f infra/local/compose.yaml up --build --detach --wait --wait-timeout 180",
+    "infra:ps": "docker compose --project-name social-media-local --env-file infra/local/.env -f infra/local/compose.yaml ps --all",
+    "infra:down": "docker compose --project-name social-media-local --env-file infra/local/.env -f infra/local/compose.yaml down",
+    "test:infra": "node --test tests/infrastructure/local-services.test.mjs",
+    "check:staged": "node scripts/check-staged.mjs",
+    "ci": "npm run format:check && npm run lint && npm run test:tooling && npm run test:typescript-config && npm run check:contracts && npm run check:api && npm run check:web"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "24.19.2",
+    "eslint": "10.14.0",
+    "globals": "17.14.0",
+    "husky": "9.1.7",
+    "lint-staged": "17.6.0",
+    "prettier": "3.10.1",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.72.2"
+  },
+  "overrides": {
+    "eslint": {
+      "minimatch": "11.0.7"
+    }
+  },
+  "lint-staged": {
+    "*.{js,cjs,jsx,ts,mts,cts,tsx,json,jsonc,md,mdx,yml,yaml,css,scss,html}": "prettier --check --ignore-unknown",
+    "*.mjs": [
+      "prettier --check",
+      "eslint --max-warnings=0"
+    ]
+  }
+}

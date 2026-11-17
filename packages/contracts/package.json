@@ -1,0 +1,21 @@
+{
+  "name": "@social-media/contracts",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "24.14.0",
+    "npm": "11.21.1"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "eslint src --max-warnings=0",
+    "test": "tsc -p tsconfig.test.json && node --test .local/tests/health/health.test.js"
+  },
+  "exports": {
+    "./health": {
+      "types": "./dist/health/health.d.ts",
+      "import": "./dist/health/health.js"
+    }
+  }
+}

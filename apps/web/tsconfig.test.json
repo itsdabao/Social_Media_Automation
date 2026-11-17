@@ -1,0 +1,13 @@
+{
+  "extends": "../../tsconfig.node.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": ".local/tests",
+    "jsx": "react-jsx",
+    "lib": ["DOM", "DOM.Iterable", "ES2023"],
+    "types": ["node", "react", "react-dom", "next"],
+    "noEmitOnError": true,
+    "rewriteRelativeImportExtensions": true
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"]
+}
