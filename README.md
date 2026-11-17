@@ -2,7 +2,7 @@
 
 Internal social publishing application using TypeScript, Next.js/React, NestJS, self-hosted Temporal, PostgreSQL, and MinIO.
 
-The workspace has five npm packages, strict TypeScript profiles, a runnable NestJS API, and a Next.js dashboard that checks its health. Local PostgreSQL, Temporal, and MinIO run through Docker Compose. Worker startup, application database access, and caller identity remain pending.
+The workspace has five npm packages, strict TypeScript profiles, a runnable NestJS API, and a Next.js dashboard that checks its health. Local infrastructure is pending a step-by-step setup, starting with PostgreSQL. Worker startup, application database access, and caller identity remain pending.
 
 ## Start here
 
@@ -15,7 +15,6 @@ The workspace has five npm packages, strict TypeScript profiles, a runnable Nest
 - [Workspace foundation](docs/guides/workspace-foundation.md): Part 1 setup, file reading order, and verification.
 - [API foundation](docs/guides/api-foundation.md): Part 2 startup commands, configuration, and request flow.
 - [Web foundation](docs/guides/web-foundation.md): Part 3 dashboard, API connection, and retry flow.
-- [Local development](docs/guides/local-development.md): Part A infrastructure startup, ports, persistence, and isolated verification.
 - [AGENTS.md](AGENTS.md): complete, self-contained project rules.
 
 ## Directory ownership

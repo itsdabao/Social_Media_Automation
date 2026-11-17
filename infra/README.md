@@ -1,13 +1,9 @@
 # Infrastructure
 
-Local infrastructure is implemented in `local/compose.yaml`, with service settings under `services/`. See the [local development guide](../docs/guides/local-development.md) for startup, credentials, ports, and focused verification.
+Local infrastructure is pending a step-by-step rebuild, starting with PostgreSQL. The previous Compose topology, MinIO source build, service initialization scripts, and infrastructure integration test have been removed at the user's request.
 
-- `local/`: PostgreSQL/Temporal/MinIO topology, health checks, named volumes, and a public environment template.
-- `services/temporal/`: Temporal database/schema/namespace initialization and dynamic configuration.
-- `services/minio/`: build the pinned upstream MinIO release.
+For each increment, explain the service purpose, alternatives, image selection, environment variables, ports, persistence, and verification before implementation. Add only the files needed by the approved increment.
 
-Use separate application and Temporal databases; Temporal owns its own schema lifecycle. Application migrations belong in `packages/backend/database/`.
+The existing web/API health flow runs independently of these services. Application database integration and the Temporal worker remain pending.
 
-Use Compose named volumes for service persistence. Store local exports/logs under ignored root `.local/` and credentials in ignored environment files or `.secrets/`. Reference Postiz services remain under its own ignored checkout.
-
-Production-specific infrastructure gets a named directory after the hosting decision. Local Compose does not establish production availability or a recovery plan.
+The former local stack has been stopped. Its Docker named volumes and local images were retained; private environment configuration remains ignored. Reintroducing services must explicitly decide whether to reuse existing volumes and credentials. Local Compose does not establish production availability.

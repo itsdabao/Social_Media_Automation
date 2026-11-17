@@ -36,11 +36,6 @@
     "test:web": "npm run test --workspace @social-media/web",
     "check:web": "npm run typecheck:web && npm run lint:web && npm run test:web",
     "check:contracts": "npm run build --workspace @social-media/contracts && npm run lint --workspace @social-media/contracts && npm run test --workspace @social-media/contracts",
-    "infra:config": "docker compose --project-name social-media-local --env-file infra/local/.env -f infra/local/compose.yaml config --quiet",
-    "infra:up": "docker compose --project-name social-media-local --env-file infra/local/.env -f infra/local/compose.yaml up --build --detach --wait --wait-timeout 180",
-    "infra:ps": "docker compose --project-name social-media-local --env-file infra/local/.env -f infra/local/compose.yaml ps --all",
-    "infra:down": "docker compose --project-name social-media-local --env-file infra/local/.env -f infra/local/compose.yaml down",
-    "test:infra": "node --test tests/infrastructure/local-services.test.mjs",
     "check:staged": "node scripts/check-staged.mjs",
     "ci": "npm run format:check && npm run lint && npm run test:tooling && npm run test:typescript-config && npm run check:contracts && npm run check:api && npm run check:web"
   },
