@@ -1,5 +1,5 @@
 {
-  "extends": "../../tsconfig.web.json",
+  "extends": "../../config/typescript/tsconfig.web.json",
   "compilerOptions": {
     "allowJs": true,
     "allowImportingTsExtensions": true,

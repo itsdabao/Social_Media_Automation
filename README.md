@@ -1,48 +1,74 @@
 # Social Media Automation
 
-Internal social publishing application using TypeScript, Next.js/React, NestJS, self-hosted Temporal, PostgreSQL, and MinIO.
+Internal social publishing application under development.
 
-The workspace has five npm packages, strict TypeScript profiles, a runnable NestJS API, and a Next.js dashboard that checks its health. Local infrastructure is pending a step-by-step setup, starting with PostgreSQL. Worker startup, application database access, and caller identity remain pending.
+## Current checkpoint
 
-## Start here
+| Area                    | Current state                                                                                                                                                                                     |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Repository              | Five npm workspaces, a shared lockfile, strict TypeScript profiles, Git hooks, and Linux/Windows CI are configured.                                                                               |
+| API                     | NestJS startup, configuration, module wiring, and a public `GET /health` liveness endpoint exist.                                                                                                 |
+| Web connection          | The dashboard calls Next.js `GET /api/health`, which calls NestJS `GET /health`. The feature handles timeouts, invalid responses, cancellation, and retry.                                        |
+| Public interfaces       | API and web share the health response interface and runtime validator through `packages/contracts`.                                                                                               |
+| Local database          | Docker Compose defines PostgreSQL 18.7 on `127.0.0.1:25432` with a named volume.                                                                                                                  |
+| Prisma                  | CLI, client, and PostgreSQL adapter are pinned to 7.10.1. Client generation has been verified. A manual `SELECT 1` connection script exists; a successful database connection remains unverified. |
+| Application persistence | Models, migrations, repository interfaces and implementations, application use cases, and API database wiring are pending.                                                                        |
+| OpenAPI                 | Swagger/OpenAPI setup and a JSON specification endpoint or file are pending.                                                                                                                      |
+| Publishing              | Caller identity, MinIO, Temporal, a running worker, and live provider publishing are pending.                                                                                                     |
 
-- [Workspace layout](docs/workspace-layout.md): where each kind of file belongs, with concrete examples.
-- [Documentation index](docs/README.md): design, plans, guides, and source reviews.
-- [Architecture](docs/architecture/architecture-design.md): system responsibilities and publishing behavior.
-- [Technical plan](docs/plans/technical-plan.md): selected stack, open choices, and implementation scope.
-- [Five-stage roadmap](docs/plans/README.md): ordered implementation plans, task coverage, checkpoints, and completion criteria.
-- [Development workflow](docs/guides/development-workflow.md): current tooling and CI.
-- [Workspace foundation](docs/guides/workspace-foundation.md): Part 1 setup, file reading order, and verification.
-- [API foundation](docs/guides/api-foundation.md): Part 2 startup commands, configuration, and request flow.
-- [Web foundation](docs/guides/web-foundation.md): Part 3 dashboard, API connection, and retry flow.
-- [AGENTS.md](AGENTS.md): complete, self-contained project rules.
+The current health response reports API HTTP liveness. Database readiness and a web-to-API-to-database operation remain pending. CI covers tooling, compiler profiles, contracts, API, and web checks. Backend lint/type checks, database integration, worker verification, browser tests, production builds, and live provider verification remain outside the current gate.
 
-## Directory ownership
+## Run the current application
 
-| Path                  | Contents                                                                            |
-| --------------------- | ----------------------------------------------------------------------------------- |
-| `apps/web/`           | Next.js dashboard and UI-only behavior.                                             |
-| `apps/api/`           | NestJS HTTP, MCP, OAuth callback, and webhook entry points.                         |
-| `apps/worker/`        | Temporal workflows, activity handlers, outbox dispatch process, and worker startup. |
-| `packages/backend/`   | Business modules, application operations, ports, and concrete adapters.             |
-| `packages/contracts/` | Public HTTP/MCP schemas and transport types.                                        |
-| `infra/`              | Compose files, service configuration, and later deployment definitions.             |
-| `scripts/`            | Repository automation and developer commands.                                       |
-| `tests/`              | Repository tooling tests and later tests spanning applications.                     |
-| `docs/`               | Maintained project documentation in English.                                        |
-| `reference/`          | Ignored third-party checkouts, including Postiz.                                    |
-| `.local/`             | Ignored local logs, temporary files, and development exports.                       |
-| `.secrets/`           | Ignored private local configuration and credentials.                                |
+Use Node.js 24.14.0 and npm 11.21.1. From the repository root:
 
-## Tooling available today
-
-Use Node.js 24.14.0 and npm 11.21.1. Run commands from this repository root:
-
-```sh
-npm ci
-npm run format:check
+```powershell
+npm.cmd ci
+npm.cmd run start:api
 ```
 
-In PowerShell, use `npm.cmd` when execution policy blocks `npm.ps1`. The root owns the only application lockfile. Run `npm run start:api` and `npm run dev:web` in separate terminals, then open `http://127.0.0.1:3000`. See the [web guide](docs/guides/web-foundation.md) for the request trace, configuration, and focused checks.
+In a second terminal:
 
-Use npm across all application workspaces and CI, with one root `package-lock.json`. References to pnpm in Postiz research describe that upstream repository; our application uses npm.
+```powershell
+npm.cmd run dev:web
+```
+
+Open http://127.0.0.1:3000. The API health endpoint is http://127.0.0.1:3001/health. Both commands run without PostgreSQL. On other shells, use `npm` in place of `npm.cmd`.
+
+## Local PostgreSQL and Prisma
+
+Start Docker and use the root [.env.example](.env.example) as a template for your private root `.env`. Set `POSTGRES_PASSWORD` and the matching password in `DATABASE_URL`. Run these commands from the repository root after installing the npm dependencies:
+
+```powershell
+docker compose --env-file .env -f infra/local/compose.yaml up -d
+npm.cmd exec --workspace @social-media/backend -- prisma generate --config prisma7.config.ts
+```
+
+The second command generates the client in `packages/backend/generated/prisma/`. Generation reads the schema and does not require a database connection. The generated code is ignored by Git.
+
+The schema currently declares the generator and PostgreSQL datasource. The manual connection script is `packages/backend/database/check-connection.ts`; it reads `DATABASE_URL` from the process environment and disconnects after its query. The API currently starts independently of that script. Prisma CLI datasource URL configuration and the first migration will be added with the persistence step.
+
+## Read next
+
+1. [API guide](docs/guides/api-foundation.md): startup, configuration, and the request path.
+2. [Web guide](docs/guides/web-foundation.md): dashboard state and the web-to-API connection.
+3. [Development workflow](docs/guides/development-workflow.md): checks, Git hooks, and CI.
+
+## Repository map
+
+Shared TypeScript profiles live in `config/typescript/`. Workspace tsconfigs extend those profiles.
+
+| Path                       | Current role                                                |
+| -------------------------- | ----------------------------------------------------------- |
+| `apps/api/`                | NestJS health API.                                          |
+| `apps/web/`                | Next.js API connection screen.                              |
+| `packages/contracts/`      | Shared health response and runtime validator.               |
+| `apps/worker/`             | Reserved worker workspace.                                  |
+| `packages/backend/`        | Prisma CLI configuration and database schema.               |
+| `infra/`                   | Local PostgreSQL Compose configuration.                     |
+| `scripts/`, `tests/`       | Repository automation and focused verification.             |
+| `docs/`                    | API, web, and development workflow guides.                  |
+| `reference/`               | Ignored external checkouts, including Postiz.               |
+| `.local/`, `.task-checks/` | Ignored private/local files and disposable check artifacts. |
+
+Use npm workspaces and one root `package-lock.json`. Project rules are in [AGENTS.md](AGENTS.md). Reference code, real environment files, credentials, dependencies, and generated output stay outside ordinary Git staging.

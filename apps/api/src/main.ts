@@ -1,8 +1,8 @@
 import {
   ApiConfigurationError,
   readApiConfig,
-} from "./composition/api-config.js";
-import { createApi } from "./composition/create-api.js";
+} from "./configuration/api-config.js";
+import { createApi } from "./bootstrap/create-api.js";
 
 async function main(): Promise<void> {
   const apiConfig = readApiConfig(process.env);

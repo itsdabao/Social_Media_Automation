@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import test from "node:test";
 import ts from "typescript";
@@ -17,13 +17,13 @@ function compileFixture(profile, sources, shouldEmit = false) {
     writeFileSync(path, content);
     return path;
   });
-  const configPath = join(root, profile);
+  const configPath = join(root, "config/typescript", profile);
   const config = ts.readConfigFile(configPath, ts.sys.readFile);
   assert.equal(config.error, undefined);
   const parsed = ts.parseJsonConfigFileContent(
     { ...config.config, files },
     ts.sys,
-    root,
+    dirname(configPath),
     {
       noEmit: !shouldEmit,
       rootDir: directory,

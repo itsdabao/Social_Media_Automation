@@ -9,6 +9,7 @@ build/
 coverage/
 *.tsbuildinfo
 apps/web/next-env.d.ts
+/packages/backend/generated/
 
 # Private configuration and local data
 .env

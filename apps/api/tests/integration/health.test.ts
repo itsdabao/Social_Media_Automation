@@ -7,7 +7,7 @@ import { join } from "node:path";
 import { createInterface } from "node:readline";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
-import { createApi } from "../../src/composition/create-api.js";
+import { createApi } from "../../src/bootstrap/create-api.js";
 
 const entryPoint = fileURLToPath(new URL("../../src/main.js", import.meta.url));
 

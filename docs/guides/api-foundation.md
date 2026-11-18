@@ -1,8 +1,10 @@
 # Part 2 — NestJS API startup and health
 
+Verification statements below record the original implementation checkpoint. Later local CI checks passed; current remote CI status and production/browser verification require separate evidence.
+
 Status: `READY_FOR_USER_REVIEW` on 16 November 2026.
 
-This increment adds the first runnable process. The API uses the presentation and composition responsibilities established in Celesnity. Health is an operational endpoint, so its implementation belongs in presentation. Publishing use cases, ports, and persistence adapters will be introduced with business behavior.
+This increment adds the first runnable process. The API separates startup, configuration, Nest module wiring, and HTTP presentation. This is a project-specific layout; it does not copy the Celesnity Agent folder structure. Health is an operational endpoint, so its implementation belongs in presentation. Publishing use cases, ports, and persistence adapters will be introduced with business behavior.
 
 ## Run locally
 
@@ -33,7 +35,7 @@ Health confirms that this API process can serve HTTP. Database, Temporal, MinIO,
 
 ## Environment loading
 
-All settings have defaults. For overrides, copy `apps/api/.env.example` to `apps/api/.env` if that private file does not already exist, then edit it. npm runs workspace scripts from the workspace directory, so the API start script loads `apps/api/.env` using Node's `--env-file-if-exists=.env`. Existing process environment values take priority. A missing file uses the defaults.
+All API settings have defaults. For overrides, use the [root environment template](../../.env.example) and set the API values in the private root `.env`. npm runs the start script from `apps/api`, so Node loads the root file using `--env-file-if-exists=../../.env`. Existing process environment values take priority. A missing file uses the defaults.
 
 | Variable   | Default     | Accepted values                      |
 | ---------- | ----------- | ------------------------------------ |
@@ -72,16 +74,16 @@ GET /health
 | Behavior                                                   | Source                                                                                     |
 | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
 | Process startup, listening, safe failure logs              | [`main.ts`](../../apps/api/src/main.ts)                                                    |
-| Parse and validate runtime settings                        | [`api-config.ts`](../../apps/api/src/composition/api-config.ts)                            |
-| Construct the Nest application and register shutdown hooks | [`create-api.ts`](../../apps/api/src/composition/create-api.ts)                            |
-| Declare the controllers owned by the API                   | [`app.module.ts`](../../apps/api/src/composition/app.module.ts)                            |
+| Parse and validate runtime settings                        | [`api-config.ts`](../../apps/api/src/configuration/api-config.ts)                          |
+| Construct the Nest application and register shutdown hooks | [`create-api.ts`](../../apps/api/src/bootstrap/create-api.ts)                              |
+| Declare the controllers owned by the API                   | [`app.module.ts`](../../apps/api/src/modules/app.module.ts)                                |
 | Handle `GET /health`                                       | [`health.controller.ts`](../../apps/api/src/presentation/http/health/health.controller.ts) |
 
 `@Module` declares the components Nest wires together. `@Controller("health")` supplies the route prefix, and `@Get()` selects the HTTP method. `main.ts` owns process startup, while the controller owns the HTTP response.
 
 The API compiler configuration extends the shared Node profile and enables Nest's decorator support. Production output excludes `*.test.ts`. The test configuration emits source and tests to ignored `apps/api/.local/tests/`.
 
-Configuration defaults and port bounds have named constants. Port validation accepts canonical decimal strings and rejects whitespace, including trailing newlines. Startup and configuration parsing stay in composition, and the health controller owns the HTTP response.
+Configuration defaults and port bounds have named constants. Port validation accepts canonical decimal strings and rejects whitespace, including trailing newlines. The entry point coordinates startup; bootstrap constructs the Nest application; configuration parses runtime settings; modules register dependencies; and the health controller owns the HTTP response.
 
 ## Checks and evidence
 
@@ -89,7 +91,7 @@ Configuration defaults and port bounds have named constants. Port validation acc
 npm run check:api
 ```
 
-The command runs API-only typed ESLint, strict TypeScript, and the focused tests. CI and the existing pre-push gate invoke it. Root `npm run lint` continues to check repository tooling. The TypeScript ESLint dependency is pinned to `8.72.2`, whose declared peers support ESLint 10 and TypeScript 5.9.
+The command runs API-only typed ESLint, strict TypeScript, and the focused tests. CI and the existing pre-push gate invoke it. Root `npm run lint` continues to check repository tooling. The TypeScript ESLint dependency is pinned to `8.73.0`.
 
 Eight tests passed locally:
 
@@ -99,6 +101,6 @@ Eight tests passed locally:
 - Startup failure with invalid configuration, without disclosing the supplied value.
 - Occupied-port failure and process exit.
 
-Configuration tests live beside [`api-config.ts`](../../apps/api/src/composition/api-config.test.ts). Process/HTTP tests live in [`tests/integration/health.test.ts`](../../apps/api/tests/integration/health.test.ts). They use loopback and disposable files under `.local/`, with no database or social accounts.
+Configuration tests live beside [`api-config.ts`](../../apps/api/src/configuration/api-config.test.ts). Process/HTTP tests live in [`tests/integration/health.test.ts`](../../apps/api/tests/integration/health.test.ts). They use loopback and disposable files under `.local/`, with no database or social accounts.
 
 The full repository CI gate, standalone production build, clean-install replay, browser checks, and live provider tests have not been run for this increment. Remote CI execution awaits an authorized push.

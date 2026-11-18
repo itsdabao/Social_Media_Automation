@@ -10,12 +10,12 @@
   "scripts": {
     "prebuild": "npm run build --workspace @social-media/contracts",
     "build": "tsc -p tsconfig.json",
-    "start": "node --env-file-if-exists=.env dist/main.js",
+    "start": "node --env-file-if-exists=../../.env dist/main.js",
     "lint": "eslint src tests --max-warnings=0",
     "pretypecheck": "npm run build --workspace @social-media/contracts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "pretest": "npm run build --workspace @social-media/contracts",
-    "test": "tsc -p tsconfig.test.json && node --test .local/tests/src/composition/api-config.test.js .local/tests/tests/integration/health.test.js"
+    "test": "tsc -p tsconfig.test.json && node --test .local/tests/src/configuration/api-config.test.js .local/tests/tests/integration/health.test.js"
   },
   "dependencies": {
     "@social-media/contracts": "0.0.0",

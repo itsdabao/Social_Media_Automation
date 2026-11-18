@@ -6,8 +6,5 @@
   "engines": {
     "node": "24.14.0",
     "npm": "11.21.1"
-  },
-  "dependencies": {
-    "@temporalio/worker": "1.25.0"
   }
 }

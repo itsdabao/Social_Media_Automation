@@ -32,7 +32,7 @@ The hook checks files staged for the commit. It does not automatically format, c
 | `npm run lint`                   | Check tooling scripts, tests, and ESLint configuration; warnings fail the check.                 |
 | `npm run test:tooling`           | Test real Git hook commands against disposable repositories without creating commits or pushing. |
 | `npm run test:typescript-config` | Compile disposable fixtures to verify strict typing, Node ESM, and web JSX profiles.             |
-| `npm run start:api`              | Compile and start the API with optional workspace-local environment settings.                    |
+| `npm run start:api`              | Compile and start the API with optional root `.env` settings.                                    |
 | `npm run check:api`              | Run API-only typed lint, strict TypeScript, and isolated configuration/HTTP tests.               |
 | `npm run dev:web`                | Start the Next.js dashboard locally after compiling its shared contracts.                        |
 | `npm run check:web`              | Generate route types, check TypeScript, lint web source, and run feature tests.                  |
@@ -45,7 +45,7 @@ The root toolchain uses npm and a committed `package-lock.json`. Both local deve
 
 ## What CI checks today
 
-The project contains five npm workspaces, shared TypeScript profiles, the NestJS API, the Next.js dashboard, and a public health contract. CI checks locked installation, formatting, tooling lint, Git hook/compiler-profile tests, and focused contracts/API/web gates. Typed ESLint enforces import restrictions on frontend and public contracts. Tests compile into each owning package's ignored `.local/tests/`; API HTTP tests use loopback and disposable configuration. Git hook/compiler fixtures remain under `.task-checks/`. Worker checks will be added with worker source. See the [workspace](workspace-foundation.md), [API](api-foundation.md), and [web](web-foundation.md) guides.
+The project contains five npm workspaces, shared TypeScript profiles, the NestJS API, the Next.js dashboard, and a public health contract. CI checks locked installation, formatting, tooling lint, Git hook/compiler-profile tests, and focused contracts/API/web gates. Typed ESLint enforces import restrictions on frontend and public contracts. Tests compile into each owning package's ignored `.local/tests/`; API HTTP tests use loopback and disposable configuration. Git hook/compiler fixtures remain under `.task-checks/`. Worker checks will be added with worker source. See the [API](api-foundation.md) and [web](web-foundation.md) guides.
 
 Local pre-push checks the current working directory. If it differs from the commits being pushed, its result is not proof about those commits. GitHub CI checks the clean pushed/PR tree and remains the authoritative remote check.
 
@@ -68,6 +68,6 @@ After the workflow has been committed, pushed, and completed at least once, conf
 - `Repository checks (ubuntu-latest)`
 - `Repository checks (windows-latest)`
 
-Keep those check names stable. A workflow file alone does not prevent merging; required status checks must be enabled on GitHub. Until the initial commit and push are authorized, the workflow exists locally and has not run on GitHub.
+Keep those check names stable. A workflow file alone does not prevent merging; required status checks must be enabled on GitHub. The workflow is committed. Remote run results and branch-protection settings must be checked on GitHub; passing local checks does not establish remote success.
 
 Sources: [GitHub status checks](https://docs.github.com/en/pull-requests/reference/status-checks), [Husky setup](https://typicode.github.io/husky/get-started.html), [lint-staged](https://github.com/lint-staged/lint-staged), and [Prettier installation and CI](https://prettier.io/docs/install).

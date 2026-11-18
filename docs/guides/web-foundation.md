@@ -1,5 +1,7 @@
 # Part 3 — Next.js dashboard and API connection
 
+Verification statements below record the original implementation checkpoint. Later local CI checks passed; current remote CI status and production/browser verification require separate evidence.
+
 Status: `READY_FOR_USER_REVIEW` on 16 November 2026.
 
 This increment adds a Vietnamese dashboard that checks the existing NestJS health endpoint. It shows checking, connected, or unavailable status, with a button to check again. Authentication, publishing, persistence, and worker execution remain in their owning increments.
