@@ -7,3 +7,29 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model User {
+  id           String @id @default(uuid())
+  email        String @unique
+  passwordHash String
+  drafts PostDraft[]
+  sessions Session[]
+}
+
+model PostDraft {
+  id        String   @id @default(uuid())
+  ownerId   String
+  owner     User     @relation(fields: [ownerId], references: [id])
+  caption   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ownerId])
+}
+
+model Session {
+  tokenHash String   @id
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  expiresAt DateTime
+}
