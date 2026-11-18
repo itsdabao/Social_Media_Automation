@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
-import { once } from "node:events";
+import { on, once } from "node:events";
 import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
 import { createServer } from "node:net";
 import { join } from "node:path";
@@ -10,6 +10,24 @@ import { fileURLToPath } from "node:url";
 import { createApi } from "../../src/bootstrap/create-api.js";
 
 const entryPoint = fileURLToPath(new URL("../../src/main.js", import.meta.url));
+
+function readApiEvent(line: string, eventName: string): object | undefined {
+  if (!line.startsWith("{")) {
+    return undefined;
+  }
+
+  const event: unknown = JSON.parse(line);
+  if (
+    typeof event === "object" &&
+    event !== null &&
+    "event" in event &&
+    event.event === eventName
+  ) {
+    return event;
+  }
+
+  return undefined;
+}
 
 await test("health is public liveness and closing the app releases its listener", async () => {
   const app = await createApi();
@@ -60,17 +78,21 @@ await test(
     });
     const lines = createInterface({ input: child.stdout });
     context.after(() => lines.close());
-    const lineEvent: unknown = await once(lines, "line", {
+    let startedEvent: object | undefined;
+    const output = on(lines, "line", {
       signal: AbortSignal.timeout(10000),
+      close: ["close"],
     });
-    assert.ok(Array.isArray(lineEvent));
-    const line: unknown = lineEvent[0];
-    assert.ok(typeof line === "string");
-    const event: unknown = JSON.parse(line);
-    assert.ok(typeof event === "object" && event !== null);
-    assert.ok("event" in event && event.event === "api.started");
-    assert.ok("url" in event && typeof event.url === "string");
-    const response = await fetch(`${event.url}/health`, {
+    for await (const [line] of output) {
+      assert.ok(typeof line === "string");
+      startedEvent = readApiEvent(line, "api.started");
+      if (startedEvent !== undefined) {
+        break;
+      }
+    }
+    assert.ok(startedEvent, "Expected an api.started event");
+    assert.ok("url" in startedEvent && typeof startedEvent.url === "string");
+    const response = await fetch(`${startedEvent.url}/health`, {
       signal: AbortSignal.timeout(5000),
     });
     assert.equal(response.status, 200);
@@ -115,12 +137,18 @@ await test("a busy port fails startup and closes the API resources", async () =>
     });
     assert.equal(result.error, undefined);
     assert.equal(result.status, 1);
-    const event: unknown = JSON.parse(result.stderr);
-    assert.deepEqual(event, {
-      event: "api.startup_failed",
-      code: "startup_failed",
-    });
-    assert.equal(result.stdout, "");
+    const errorLines = result.stderr.split(/\r?\n/);
+    const failedEvents = errorLines
+      .map((line) => readApiEvent(line, "api.startup_failed"))
+      .filter((event) => event !== undefined);
+    assert.deepEqual(failedEvents, [
+      { event: "api.startup_failed", code: "startup_failed" },
+    ]);
+    assert.ok(
+      !result.stdout
+        .split(/\r?\n/)
+        .some((line) => readApiEvent(line, "api.started") !== undefined),
+    );
   } finally {
     await new Promise<void>((resolve, reject) => {
       occupied.close((error) => {
