@@ -4,19 +4,19 @@ Internal social publishing application under development.
 
 ## Current checkpoint
 
-| Area                    | Current state                                                                                                                                                                                     |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Repository              | Five npm workspaces, a shared lockfile, strict TypeScript profiles, Git hooks, and Linux/Windows CI are configured.                                                                               |
-| API                     | NestJS startup, configuration, module wiring, and a public `GET /health` liveness endpoint exist.                                                                                                 |
-| Web connection          | The dashboard calls Next.js `GET /api/health`, which calls NestJS `GET /health`. The feature handles timeouts, invalid responses, cancellation, and retry.                                        |
-| Public interfaces       | API and web share the health response interface and runtime validator through `packages/contracts`.                                                                                               |
-| Local database          | Docker Compose defines PostgreSQL 18.7 on `127.0.0.1:25432` with a named volume.                                                                                                                  |
-| Prisma                  | CLI, client, and PostgreSQL adapter are pinned to 7.10.1. Client generation has been verified. A manual `SELECT 1` connection script exists; a successful database connection remains unverified. |
-| Application persistence | Models, migrations, repository interfaces and implementations, application use cases, and API database wiring are pending.                                                                        |
-| OpenAPI                 | Swagger/OpenAPI setup and a JSON specification endpoint or file are pending.                                                                                                                      |
-| Publishing              | Caller identity, MinIO, Temporal, a running worker, and live provider publishing are pending.                                                                                                     |
+| Area                    | Current state                                                                                                                                                             |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Repository              | Five npm workspaces, a shared lockfile, strict TypeScript profiles, Git hooks, and Linux/Windows CI are configured.                                                       |
+| API                     | NestJS serves `GET /health` for HTTP liveness and `GET /ready` for database readiness.                                                                                    |
+| Web connection          | The dashboard calls Next.js `GET /api/health`, which calls NestJS `GET /health`. The feature handles timeouts, invalid responses, cancellation, and retry.                |
+| Public interfaces       | API and web share the health response through `packages/contracts`. The readiness controller uses a `DatabaseReadiness` interface wired to the database provider by Nest. |
+| Local database          | Docker Compose defines PostgreSQL 18.7 on `127.0.0.1:25432` with a named volume.                                                                                          |
+| Prisma                  | CLI, client, and PostgreSQL adapter are pinned to 7.10.1. `GET /ready` runs `SELECT 1` through the API's shared Prisma Client.                                            |
+| Application persistence | The first feature will introduce models, migrations, repository implementations, and application use cases.                                                               |
+| OpenAPI                 | `GET /openapi.json` serves the API's OpenAPI 3.0.3 document for the liveness and readiness routes.                                                                        |
+| Publishing              | Caller identity, MinIO, Temporal, a running worker, and live provider publishing are pending.                                                                             |
 
-The current health response reports API HTTP liveness. Database readiness and a web-to-API-to-database operation remain pending. CI covers tooling, compiler profiles, contracts, API, and web checks. Backend lint/type checks, database integration, worker verification, browser tests, production builds, and live provider verification remain outside the current gate.
+The dashboard reports HTTP liveness. The database readiness endpoint is called directly on the API. CI covers tooling, compiler profiles, contracts, API, and web checks. Automated API checks use a stub for the database readiness result. Live database checks, worker verification, browser tests, production builds, and live provider verification remain outside the current gate.
 
 ## Run the current application
 
@@ -33,7 +33,13 @@ In a second terminal:
 npm.cmd run dev:web
 ```
 
-Open http://127.0.0.1:3000. The API health endpoint is http://127.0.0.1:3001/health. Both commands run without PostgreSQL. On other shells, use `npm` in place of `npm.cmd`.
+Open http://127.0.0.1:3000. To check the API directly, use the following commands. The API and web can start without PostgreSQL. On other shells, use `npm` in place of `npm.cmd`.
+
+```powershell
+curl.exe -i http://127.0.0.1:3001/health
+curl.exe -i http://127.0.0.1:3001/ready
+curl.exe -i http://127.0.0.1:3001/openapi.json
+```
 
 ## Local PostgreSQL and Prisma
 
@@ -41,12 +47,12 @@ Start Docker and use the root [.env.example](.env.example) as a template for you
 
 ```powershell
 docker compose --env-file .env -f infra/local/compose.yaml up -d
-npm.cmd exec --workspace @social-media/backend -- prisma generate --config prisma7.config.ts
+docker compose --env-file .env -f infra/local/compose.yaml ps
 ```
 
-The second command generates the client in `packages/backend/generated/prisma/`. Generation reads the schema and does not require a database connection. The generated code is ignored by Git.
+The API build generates the Prisma Client in `packages/backend/generated/prisma/` before compiling the backend package. To check the same PostgreSQL connection from a terminal after generation, run `node --env-file=.env packages/backend/database/check-connection.ts` from the root.
 
-The schema currently declares the generator and PostgreSQL datasource. The manual connection script is `packages/backend/database/check-connection.ts`; it reads `DATABASE_URL` from the process environment and disconnects after its query. The API currently starts independently of that script. Prisma CLI datasource URL configuration and the first migration will be added with the persistence step.
+The API reads `DATABASE_URL` from the process environment. `/ready` returns HTTP 200 when PostgreSQL answers and HTTP 503 when the connection is unavailable or `DATABASE_URL` is missing. The schema currently declares the generator and PostgreSQL datasource. Prisma CLI datasource URL configuration and the first migration will be added with the first application model.
 
 ## Read next
 

@@ -1,5 +1,11 @@
 import { Module } from "@nestjs/common";
 import { HealthController } from "../presentation/http/health/health.controller.js";
+import { ReadinessController } from "../presentation/http/health/readiness.controller.js";
+import { OpenApiController } from "../presentation/http/openapi/openapi.controller.js";
+import { DatabaseModule } from "./database.module.js";
 
-@Module({ controllers: [HealthController] })
+@Module({
+  imports: [DatabaseModule],
+  controllers: [HealthController, ReadinessController, OpenApiController],
+})
 export class AppModule {}

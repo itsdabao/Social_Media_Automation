@@ -1,10 +1,6 @@
 # Part 2 — NestJS API startup and health
 
-Verification statements below record the original implementation checkpoint. Later local CI checks passed; current remote CI status and production/browser verification require separate evidence.
-
-Status: `READY_FOR_USER_REVIEW` on 16 November 2026.
-
-This increment adds the first runnable process. The API separates startup, configuration, Nest module wiring, and HTTP presentation. This is a project-specific layout; it does not copy the Celesnity Agent folder structure. Health is an operational endpoint, so its implementation belongs in presentation. Publishing use cases, ports, and persistence adapters will be introduced with business behavior.
+The API separates startup, configuration, Nest module wiring, and HTTP presentation. This guide covers the HTTP liveness endpoint, the PostgreSQL readiness check, and the OpenAPI JSON document.
 
 ## Run locally
 
@@ -20,9 +16,11 @@ In another PowerShell terminal:
 
 ```powershell
 Invoke-RestMethod http://127.0.0.1:3001/health
+curl.exe -i http://127.0.0.1:3001/ready
+Invoke-RestMethod http://127.0.0.1:3001/openapi.json
 ```
 
-The endpoint returns HTTP 200 with this body and a `Cache-Control: no-store` header.
+`/health` returns HTTP 200 with this body and a `Cache-Control: no-store` header.
 
 ```json
 {
@@ -31,11 +29,11 @@ The endpoint returns HTTP 200 with this body and a `Cache-Control: no-store` hea
 }
 ```
 
-Health confirms that this API process can serve HTTP. Database, Temporal, MinIO, authentication, and Facebook connections are pending their owning increments. Readiness checks for required dependencies should be added when those dependencies are wired.
+Liveness confirms that this API process can serve HTTP. Readiness confirms that the API can query PostgreSQL using `SELECT 1`. `/ready` returns HTTP 200 with `{"status":"ready"}` or HTTP 503 with `{"error":{"code":"database_unavailable"}}`. Start PostgreSQL using the [local Compose instructions](../../README.md#local-postgresql-and-prisma) to try the successful response. `/openapi.json` describes the HTTP requests and responses for both checks.
 
 ## Environment loading
 
-All API settings have defaults. For overrides, use the [root environment template](../../.env.example) and set the API values in the private root `.env`. npm runs the start script from `apps/api`, so Node loads the root file using `--env-file-if-exists=../../.env`. Existing process environment values take priority. A missing file uses the defaults.
+Use the [root environment template](../../.env.example) and set local values in the private root `.env`. npm runs the start script from `apps/api`, so Node loads the root file using `--env-file-if-exists=../../.env`. Existing process environment values take priority. A missing file uses the HTTP defaults. Supply `DATABASE_URL` to enable the database readiness check.
 
 | Variable   | Default     | Accepted values                      |
 | ---------- | ----------- | ------------------------------------ |
@@ -57,7 +55,8 @@ main.ts
   → readApiConfig(process.env)
   → createApi()
       → NestFactory.create(AppModule)
-      → register HealthController
+      → create DatabaseConnection from DATABASE_URL when configured
+      → register HTTP controllers
       → enable shutdown hooks
   → application.listen(apiConfig.port, apiConfig.host)
 ```
@@ -69,15 +68,25 @@ GET /health
   → Nest routes the request
   → HealthController.getHealth()
   → HTTP 200 with the health response
+
+GET /ready
+  → ReadinessController asks the DatabaseReadiness interface
+  → DatabaseConnection calls pingDatabase() through Prisma
+  → PostgreSQL runs SELECT 1
+  → HTTP 200 on success or HTTP 503 when unavailable
 ```
 
-| Behavior                                                   | Source                                                                                     |
-| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| Process startup, listening, safe failure logs              | [`main.ts`](../../apps/api/src/main.ts)                                                    |
-| Parse and validate runtime settings                        | [`api-config.ts`](../../apps/api/src/configuration/api-config.ts)                          |
-| Construct the Nest application and register shutdown hooks | [`create-api.ts`](../../apps/api/src/bootstrap/create-api.ts)                              |
-| Declare the controllers owned by the API                   | [`app.module.ts`](../../apps/api/src/modules/app.module.ts)                                |
-| Handle `GET /health`                                       | [`health.controller.ts`](../../apps/api/src/presentation/http/health/health.controller.ts) |
+| Behavior                                                                            | Source                                                                                                  |
+| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Process startup, listening, safe failure logs                                       | [`main.ts`](../../apps/api/src/main.ts)                                                                 |
+| Parse and validate runtime settings                                                 | [`api-config.ts`](../../apps/api/src/configuration/api-config.ts)                                       |
+| Construct the Nest application and register shutdown hooks                          | [`create-api.ts`](../../apps/api/src/bootstrap/create-api.ts)                                           |
+| Declare the controllers owned by the API                                            | [`app.module.ts`](../../apps/api/src/modules/app.module.ts)                                             |
+| Handle `GET /health`                                                                | [`health.controller.ts`](../../apps/api/src/presentation/http/health/health.controller.ts)              |
+| Wire the readiness interface to a shared Prisma Client and close it during shutdown | [`database.module.ts`](../../apps/api/src/modules/database.module.ts)                                   |
+| Run the PostgreSQL probe                                                            | [`create-prisma-client.ts`](../../packages/backend/src/infrastructure/database/create-prisma-client.ts) |
+| Map database readiness to an HTTP response                                          | [`readiness.controller.ts`](../../apps/api/src/presentation/http/health/readiness.controller.ts)        |
+| Serve the OpenAPI JSON document                                                     | [`openapi.controller.ts`](../../apps/api/src/presentation/http/openapi/openapi.controller.ts)           |
 
 `@Module` declares the components Nest wires together. `@Controller("health")` supplies the route prefix, and `@Get()` selects the HTTP method. `main.ts` owns process startup, while the controller owns the HTTP response.
 
@@ -93,13 +102,15 @@ npm run check:api
 
 The command runs API-only typed ESLint, strict TypeScript, and the focused tests. CI and the existing pre-push gate invoke it. Root `npm run lint` continues to check repository tooling. The TypeScript ESLint dependency is pinned to `8.73.0`.
 
-Eight tests passed locally:
+The API checks cover:
 
 - Configuration defaults, accepted addresses/boundary ports, invalid hosts, and malformed ports.
 - Real HTTP health response and listener closure.
 - Actual entry-point startup with an isolated `.env` and an operating-system-assigned port.
 - Startup failure with invalid configuration, without disclosing the supplied value.
 - Occupied-port failure and process exit.
+- Readiness success, unavailability, and independence from HTTP liveness using a stubbed database result.
+- The OpenAPI document and its operational responses.
 
 Configuration tests live beside [`api-config.ts`](../../apps/api/src/configuration/api-config.test.ts). Process/HTTP tests live in [`tests/integration/health.test.ts`](../../apps/api/tests/integration/health.test.ts). They use loopback and disposable files under `.local/`, with no database or social accounts.
 

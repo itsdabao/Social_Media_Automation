@@ -8,6 +8,8 @@ import { createInterface } from "node:readline";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { createApi } from "../../src/bootstrap/create-api.js";
+import { DATABASE_READINESS } from "../../src/presentation/http/health/database-readiness.js";
+import type { DatabaseReadiness } from "../../src/presentation/http/health/database-readiness.js";
 
 const entryPoint = fileURLToPath(new URL("../../src/main.js", import.meta.url));
 
@@ -46,6 +48,56 @@ await test("health is public liveness and closing the app releases its listener"
     await app.close();
   }
   assert.equal(server.listening, false);
+});
+
+await test("readiness reports the database independently of HTTP liveness", async (context) => {
+  const app = await createApi();
+  context.after(() => app.close());
+  const databaseReadiness = app.get<DatabaseReadiness>(DATABASE_READINESS);
+  const probe = context.mock.method(databaseReadiness, "isReady", () =>
+    Promise.resolve(true),
+  );
+  probe.mock.mockImplementationOnce(() => Promise.resolve(false));
+
+  await app.listen(0, "127.0.0.1");
+  const url = await app.getUrl();
+  const unavailable = await fetch(`${url}/ready`);
+  assert.equal(unavailable.status, 503);
+  assert.equal(unavailable.headers.get("cache-control"), "no-store");
+  assert.deepEqual(await unavailable.json(), {
+    error: { code: "database_unavailable" },
+  });
+
+  const health = await fetch(`${url}/health`);
+  assert.equal(health.status, 200);
+  await health.body?.cancel();
+  assert.equal(probe.mock.callCount(), 1);
+
+  const ready = await fetch(`${url}/ready`);
+  assert.equal(ready.status, 200);
+  assert.equal(ready.headers.get("cache-control"), "no-store");
+  assert.deepEqual(await ready.json(), { status: "ready" });
+});
+
+await test("OpenAPI JSON documents the operational endpoints", async (context) => {
+  const app = await createApi();
+  context.after(() => app.close());
+  await app.listen(0, "127.0.0.1");
+
+  const response = await fetch(`${await app.getUrl()}/openapi.json`);
+  assert.equal(response.status, 200);
+  assert.match(
+    response.headers.get("content-type") ?? "",
+    /^application\/json/,
+  );
+  const document: unknown = await response.json();
+  assert.partialDeepStrictEqual(document, {
+    openapi: "3.0.3",
+    paths: {
+      "/health": { get: { responses: { "200": {} } } },
+      "/ready": { get: { responses: { "200": {}, "503": {} } } },
+    },
+  });
 });
 
 await test(

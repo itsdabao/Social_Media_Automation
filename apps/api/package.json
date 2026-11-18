@@ -8,17 +8,20 @@
     "npm": "11.21.1"
   },
   "scripts": {
-    "prebuild": "npm run build --workspace @social-media/contracts",
+    "build:dependencies": "npm run build --workspace @social-media/contracts && npm run build --workspace @social-media/backend",
+    "prebuild": "npm run build:dependencies",
     "build": "tsc -p tsconfig.json",
     "start": "node --env-file-if-exists=../../.env dist/main.js",
+    "prelint": "npm run build:dependencies",
     "lint": "eslint src tests --max-warnings=0",
-    "pretypecheck": "npm run build --workspace @social-media/contracts",
+    "pretypecheck": "npm run build:dependencies",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "pretest": "npm run build --workspace @social-media/contracts",
+    "pretest": "npm run build:dependencies",
     "test": "tsc -p tsconfig.test.json && node --test .local/tests/src/configuration/api-config.test.js .local/tests/tests/integration/health.test.js"
   },
   "dependencies": {
     "@social-media/contracts": "0.0.0",
+    "@social-media/backend": "0.0.0",
     "@nestjs/common": "12.5.0",
     "@nestjs/core": "12.5.0",
     "@nestjs/platform-express": "12.5.0",
