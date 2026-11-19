@@ -46,6 +46,6 @@ export class DatabaseConnection implements DatabaseReadiness, OnModuleDestroy {
     },
     { provide: DATABASE_READINESS, useExisting: DatabaseConnection },
   ],
-  exports: [DATABASE_READINESS],
+  exports: [DatabaseConnection, DATABASE_READINESS],
 })
 export class DatabaseModule {}

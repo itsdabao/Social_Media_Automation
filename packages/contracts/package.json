@@ -13,6 +13,10 @@
     "test": "tsc -p tsconfig.test.json && node --test .local/tests/health/health.test.js"
   },
   "exports": {
+    "./auth": {
+      "types": "./dist/auth/auth.d.ts",
+      "import": "./dist/auth/auth.js"
+    },
     "./health": {
       "types": "./dist/health/health.d.ts",
       "import": "./dist/health/health.js"

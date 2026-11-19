@@ -1,6 +1,6 @@
 import { isApiHealthResponse } from "@social-media/contracts/health";
 import type { ApiHealthResponse } from "@social-media/contracts/health";
-import { readApiHealthEndpoint } from "./api-health-config.ts";
+import { readApiOrigin } from "../../../server/api-origin.ts";
 
 const API_HEALTH_TIMEOUT_MS = 3000;
 
@@ -14,7 +14,7 @@ export async function checkApiHealth(
 ): Promise<ApiHealthCheckResult> {
   let endpoint: URL;
   try {
-    endpoint = readApiHealthEndpoint(apiBaseUrl);
+    endpoint = new URL("/health", readApiOrigin(apiBaseUrl));
   } catch {
     return { status: "invalid_configuration" };
   }

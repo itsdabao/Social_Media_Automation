@@ -37,7 +37,7 @@
     "check:web": "npm run typecheck:web && npm run lint:web && npm run test:web",
     "check:contracts": "npm run build --workspace @social-media/contracts && npm run lint --workspace @social-media/contracts && npm run test --workspace @social-media/contracts",
     "check:staged": "node scripts/check-staged.mjs",
-    "ci": "npm run format:check && npm run lint && npm run test:tooling && npm run test:typescript-config && npm run check:contracts && npm run check:api && npm run check:web"
+    "ci": "npm run format:check && npm run lint && npm run test:tooling && npm run test:typescript-config && npm run check:contracts && npm run test:password --workspace @social-media/backend && npm run test:session --workspace @social-media/backend && npm run check:api && npm run check:web"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

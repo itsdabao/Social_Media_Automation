@@ -3,8 +3,8 @@ import type { ReactElement, ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Social Media · Kết nối API",
-  description: "Kiểm tra kết nối API của ứng dụng Social Media.",
+  title: "Social Media",
+  description: "Ứng dụng Social Media.",
 };
 
 interface RootLayoutProps {

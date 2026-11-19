@@ -1,6 +1,6 @@
 const DEFAULT_API_BASE_URL = "http://127.0.0.1:3001";
 
-export function readApiHealthEndpoint(apiBaseUrl: string | undefined): URL {
+export function readApiOrigin(apiBaseUrl: string | undefined): URL {
   const endpoint = new URL(apiBaseUrl ?? DEFAULT_API_BASE_URL);
   const isHttpProtocol =
     endpoint.protocol === "http:" || endpoint.protocol === "https:";
@@ -14,6 +14,5 @@ export function readApiHealthEndpoint(apiBaseUrl: string | undefined): URL {
     );
   }
 
-  endpoint.pathname = "/health";
   return endpoint;
 }
