@@ -11,6 +11,21 @@ services:
       - "127.0.0.1:25432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "pg_isready",
+          "-h",
+          "127.0.0.1",
+          "-U",
+          "postgres",
+          "-d",
+          "social_media",
+        ]
+      interval: 2s
+      timeout: 3s
+      retries: 15
 
   silo:
     image: docker.io/pgsty/silo:RELEASE.2026-11-12T00-00-00Z
@@ -23,6 +38,11 @@ services:
       - "127.0.0.1:29001:9001"
     volumes:
       - silo-data:/data
+    healthcheck:
+      test: ["CMD", "silo", "healthcheck", "ready"]
+      interval: 2s
+      timeout: 6s
+      retries: 15
 
 volumes:
   postgres-data:

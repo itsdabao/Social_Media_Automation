@@ -22,6 +22,7 @@
     "lint": "eslint scripts tests eslint.config.mjs --max-warnings=0",
     "test:tooling": "node --test tests/tooling/*.test.mjs",
     "test:typescript-config": "node --test tests/configuration/typescript-config.test.mjs",
+    "dev": "node scripts/dev.mjs",
     "build:api": "npm run build --workspace @social-media/api",
     "start:api": "npm run build:api && npm run start --workspace @social-media/api",
     "lint:api": "npm run lint --workspace @social-media/api",

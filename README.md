@@ -21,10 +21,26 @@ The dashboard reports HTTP liveness. The database readiness endpoint is called d
 
 ## Run the current application
 
-Use Node.js 24.14.0 and npm 11.21.1. From the repository root:
+Use Node.js 24.14.0 and npm 11.21.1. Start Docker Desktop, then copy the root
+[`.env.example`](.env.example) to a private `.env` if you do not have one.
+Set the PostgreSQL connection and Silo credentials before running these commands
+from the repository root:
 
 ```powershell
 npm.cmd ci
+npm.cmd run dev
+```
+
+The dev command waits for PostgreSQL and Silo, builds the API and shared
+packages, then runs NestJS and Next.js together. The default API address is
+http://127.0.0.1:3001 and the web address is http://127.0.0.1:3000. Press
+Ctrl+C to stop the API and web. The Docker services stay running in the
+background. Apply migrations and seed a local sign-in account separately when
+setting up a fresh database.
+
+To run the API on its own:
+
+```powershell
 npm.cmd run start:api
 ```
 
