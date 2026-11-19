@@ -23,5 +23,6 @@ import { DatabaseConnection, DatabaseModule } from "./database.module.js";
       },
     },
   ],
+  exports: [PASSWORD_SESSION_SERVICE],
 })
 export class AuthModule {}

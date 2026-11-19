@@ -20,6 +20,10 @@
     "./health": {
       "types": "./dist/health/health.d.ts",
       "import": "./dist/health/health.js"
+    },
+    "./post-drafts": {
+      "types": "./dist/post-drafts/post-drafts.d.ts",
+      "import": "./dist/post-drafts/post-drafts.js"
     }
   }
 }

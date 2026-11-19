@@ -23,6 +23,10 @@
     "./database": {
       "types": "./dist/src/infrastructure/database/create-prisma-client.d.ts",
       "import": "./dist/src/infrastructure/database/create-prisma-client.js"
+    },
+    "./post-drafts": {
+      "types": "./dist/src/modules/post-drafts/post-drafts.d.ts",
+      "import": "./dist/src/modules/post-drafts/post-drafts.js"
     }
   },
   "devDependencies": {

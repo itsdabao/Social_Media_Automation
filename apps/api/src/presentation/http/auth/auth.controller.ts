@@ -17,6 +17,7 @@ import type { PasswordSessionService } from "@social-media/backend/auth";
 import { parseLoginInput } from "@social-media/contracts/auth";
 import type { SignedInUser } from "@social-media/contracts/auth";
 import { formatSessionCookie, readSessionToken } from "./session-cookie.js";
+import { requireSignedInUser } from "./require-signed-in-user.js";
 
 export const PASSWORD_SESSION_SERVICE = Symbol("PASSWORD_SESSION_SERVICE");
 
@@ -77,17 +78,7 @@ export class AuthController {
   async me(
     @Headers("cookie") cookieHeader: string | undefined,
   ): Promise<SignedInUser> {
-    const token = readSessionToken(cookieHeader);
-    const user = token
-      ? await this.withSessions((sessions) =>
-          sessions.getUser(token, new Date()),
-        )
-      : null;
-    if (!user) {
-      throw new UnauthorizedException({ error: { code: "unauthenticated" } });
-    }
-
-    return user;
+    return requireSignedInUser(cookieHeader, this.sessions);
   }
 
   @Post("logout")

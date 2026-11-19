@@ -17,7 +17,7 @@
     "pretypecheck": "npm run build:dependencies",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "pretest": "npm run build:dependencies",
-    "test": "tsc -p tsconfig.test.json && node --test .local/tests/src/configuration/api-config.test.js .local/tests/tests/integration/health.test.js"
+    "test": "tsc -p tsconfig.test.json && node --test .local/tests/src/configuration/api-config.test.js .local/tests/tests/integration/health.test.js .local/tests/tests/integration/post-drafts.test.js"
   },
   "dependencies": {
     "@social-media/contracts": "0.0.0",

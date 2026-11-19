@@ -1,3 +1,9 @@
+export class DraftStorageError extends Error {
+  constructor(readonly kind: "unavailable" | "unexpected") {
+    super(kind);
+  }
+}
+
 export interface PostDraft {
   readonly id: string;
   readonly ownerId: string;

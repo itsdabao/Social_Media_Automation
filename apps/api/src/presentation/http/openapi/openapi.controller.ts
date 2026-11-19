@@ -1,5 +1,28 @@
 import { Controller, Get, Header } from "@nestjs/common";
 
+const DRAFT_SECURITY = [{ sessionCookie: [] }];
+const DRAFT_SCHEMA = { $ref: "#/components/schemas/Draft" };
+const DRAFT_CAPTION_BODY = {
+  required: true,
+  content: {
+    "application/json": {
+      schema: { $ref: "#/components/schemas/DraftCaptionInput" },
+    },
+  },
+};
+const DRAFT_FAILURES = {
+  "401": { description: "The session is missing, expired, or revoked." },
+  "500": { description: "The storage operation failed unexpectedly." },
+  "503": { description: "Authentication or draft storage is unavailable." },
+};
+const DRAFT_NOT_FOUND = {
+  description: "No draft with this ID belongs to the signed-in user.",
+};
+const DRAFT_MUTATION_FORBIDDEN = {
+  description: "The browser must send mutations through the web origin.",
+};
+const INVALID_DRAFT_CAPTION = { description: "The caption is invalid." };
+
 const OPENAPI_DOCUMENT = {
   openapi: "3.0.3",
   info: { title: "Social Media Automation API", version: "0.0.0" },
@@ -20,9 +43,112 @@ const OPENAPI_DOCUMENT = {
           email: { type: "string", format: "email" },
         },
       },
+      Draft: {
+        type: "object",
+        required: ["id", "caption"],
+        properties: {
+          id: { type: "string" },
+          caption: { type: "string" },
+        },
+      },
+      DraftCaptionInput: {
+        type: "object",
+        required: ["caption"],
+        properties: {
+          caption: {
+            type: "string",
+            minLength: 1,
+            description:
+              "Trimmed before saving. Blank captions and NUL are rejected.",
+          },
+        },
+      },
     },
   },
   paths: {
+    "/drafts": {
+      post: {
+        operationId: "createDraft",
+        summary: "Create a draft for the signed-in user",
+        security: DRAFT_SECURITY,
+        requestBody: DRAFT_CAPTION_BODY,
+        responses: {
+          "201": {
+            description: "The created draft.",
+            content: { "application/json": { schema: DRAFT_SCHEMA } },
+          },
+          "400": INVALID_DRAFT_CAPTION,
+          "403": DRAFT_MUTATION_FORBIDDEN,
+          ...DRAFT_FAILURES,
+        },
+      },
+      get: {
+        operationId: "listDrafts",
+        summary: "List drafts belonging to the signed-in user",
+        security: DRAFT_SECURITY,
+        responses: {
+          "200": {
+            description: "The user's drafts.",
+            content: {
+              "application/json": {
+                schema: { type: "array", items: DRAFT_SCHEMA },
+              },
+            },
+          },
+          ...DRAFT_FAILURES,
+        },
+      },
+    },
+    "/drafts/{draftId}": {
+      parameters: [
+        {
+          name: "draftId",
+          in: "path",
+          required: true,
+          schema: { type: "string" },
+        },
+      ],
+      get: {
+        operationId: "getDraft",
+        summary: "Read a draft belonging to the signed-in user",
+        security: DRAFT_SECURITY,
+        responses: {
+          "200": {
+            description: "The requested draft.",
+            content: { "application/json": { schema: DRAFT_SCHEMA } },
+          },
+          "404": DRAFT_NOT_FOUND,
+          ...DRAFT_FAILURES,
+        },
+      },
+      patch: {
+        operationId: "updateDraftCaption",
+        summary: "Update the caption of a draft owned by the signed-in user",
+        security: DRAFT_SECURITY,
+        requestBody: DRAFT_CAPTION_BODY,
+        responses: {
+          "200": {
+            description: "The updated draft.",
+            content: { "application/json": { schema: DRAFT_SCHEMA } },
+          },
+          "400": INVALID_DRAFT_CAPTION,
+          "403": DRAFT_MUTATION_FORBIDDEN,
+          "404": DRAFT_NOT_FOUND,
+          ...DRAFT_FAILURES,
+        },
+      },
+      delete: {
+        operationId: "deleteDraft",
+        summary: "Delete a draft belonging to the signed-in user",
+        security: DRAFT_SECURITY,
+        responses: {
+          "204": { description: "The draft was deleted." },
+          "403": DRAFT_MUTATION_FORBIDDEN,
+          "404": DRAFT_NOT_FOUND,
+          ...DRAFT_FAILURES,
+        },
+      },
+    },
     "/auth/login": {
       post: {
         operationId: "login",
